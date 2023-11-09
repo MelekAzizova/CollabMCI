@@ -1,7 +1,14 @@
 Reports
-Time, Tag. Describtion:
+Time, Tag: Describtion.
 
-08.11.2023, 16:35. Meeting 01:
+08.11.2023 16:35, Meeting 01:
 	Melek -> Reporting.
 	Inara -> Conva picture of work.
 	Jafar -> initial code carcas.
+
+
+09.11.2023 21:00, Meeting 02:
+	Melek -> CompanyService update.
+	Inare -> Interface first faze.
+	Jafar -> Exception cases.
+	
