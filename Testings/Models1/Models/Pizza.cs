@@ -4,6 +4,6 @@ internal class Pizza : Product
 {
     public override string ToString()
     {
-        return base.ToString();
+        return "Pizza " + this.Name;
     }
 }
