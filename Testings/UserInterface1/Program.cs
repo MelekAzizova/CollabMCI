@@ -1,108 +1,287 @@
-﻿using Core.Models;
+﻿using Core.Exceptions;
+using Core.Models;
 
 namespace UserInterface1;
 
 internal class Program
 {
-    static void Main(string[] args)
+    static bool isLogin = false;
+    static string SInput;
+    static decimal DInput;
+    static int IInput;
+   
+
+    static string MenuRequestMessage(string menu)
     {
-        bool login = false;
-        while (!login)
+        return $"Choose from {menu} menu: ";
+    }
+    static void Register()
+    {
+        Console.Write("\tName: ");
+        string name = Console.ReadLine();
+
+        Console.Write("\tSurname: ");
+        string surname = Console.ReadLine();
+
+        Console.Write("\tUsername: ");
+        SInput = Console.ReadLine();
+
+        Console.Write("\tPassword: ");
+        if (!CompanyService.RegisterUser(name, surname, SInput, Console.ReadLine()))
         {
-            Console.WriteLine("Login Menu:");
-            Console.WriteLine("1. Login");
+            Console.WriteLine("Such username is already used.");
+        }
+    }
+    static void LoginMenu()
+    {
+        while (!isLogin)
+        {
+            Console.WriteLine("\n1. Login");
             Console.WriteLine("2. Registration");
+            Console.Write(MenuRequestMessage("Login"));
 
-            int choice = Convert.ToInt32(Console.ReadLine());
-
-            switch (choice)
+            switch (Console.ReadLine())
             {
-                case 1:
-                    Console.WriteLine("Login:");
+                case "1":
+                    Console.Write("\tUsername: ");
+                    SInput = Console.ReadLine();
 
-                    Console.Write("Username: ");
-                    string username = Console.ReadLine();
-                    Console.Write("Password: ");
-                    string password = Console.ReadLine();
-                    CompanyService.LoginUser(username,password);
-                    login= true;
+                    Console.Write("\tPassword: ");
+                    if (CompanyService.LoginUser(ref SInput, Console.ReadLine())) isLogin = true;
+                    else Console.WriteLine("Invalid username or password. Please try again.");
                     break;
-                case 2:
-                    Console.WriteLine("Registration:");
-                    Console.Write("Name: ");
-                    string name = Console.ReadLine();
-
-                    Console.Write("Surname: ");
-                    string surname = Console.ReadLine();
-
-                    Console.Write("Username: ");
-                    string newUsername = Console.ReadLine();
-
-                    Console.Write("Password: ");
-                    string newPassword = Console.ReadLine();
-                    CompanyService.RegisterUser(name,surname,newUsername,newPassword);
+                case "2":
+                    Register();
                     break;
                 default:
                     Console.WriteLine("Düzgün seçim edilməyib. Yenidən cəhd edin.");
                     break;
             }
+
+            if (isLogin) Console.WriteLine($"\nWelcome back {SInput.Substring(0, SInput.Length - 2)}.");
         }
-        bool admin = true;
-        if (!admin)
+    }
+    static int CRUDMenu()
+    {
+        Console.WriteLine("1. Create");
+        Console.WriteLine("2. Read All");
+        Console.WriteLine("3. Update"); //(Id-ə görə) (Userlərin sadəcə rolunu dəyişmək olacaq)
+        Console.WriteLine("4. Delete"); //(Id-ə görə)
+        Console.Write("Action: ");
+
+        switch (Console.ReadLine())
         {
-            while (true)
-            {
-                Console.WriteLine("User Menu:");
-                Console.WriteLine("1. Look at the pizzas \n2. Order pizza");
+            case "1":
+                Console.Write("Name: ");
+                SInput = Console.ReadLine();
+                return 1;
+            case "2":
+                return 2;
+            case "3":
+                Console.Write("ID: ");
+                Int32.TryParse(Console.ReadLine(), out IInput);
+                return 3;
+            case "4":
+                Console.Write("ID: ");
+                Int32.TryParse(Console.ReadLine(), out IInput);
+                return 4;
+        }
 
-                int choice = Convert.ToInt32(Console.ReadLine());
-               
-                switch (choice)
+        return 0;
+    }
+    static void ProductCRUD()
+    {
+        switch (CRUDMenu())
+        {
+            case 1:
+                Console.Write("Price: ");
+                Decimal.TryParse(Console.ReadLine(), out DInput);
+
+                Console.Write("Count: ");
+                Int32.TryParse(Console.ReadLine(), out IInput);
+
+                CompanyService.CreateProduct(SInput, DInput, IInput);
+                break;
+            case 2:
+                CompanyService.GetProductsData().ForEach(x => Console.WriteLine(x.name));
+                break;
+            case 3:
+                Console.WriteLine("1. Name");
+                Console.WriteLine("2. Price");
+                Console.WriteLine("3. Count");
+                Console.Write("What to change?: ");
+
+                switch (Console.ReadLine())
                 {
-                    case 1:
-                        
-                        int n = Convert.ToInt32(Console.ReadLine());
-                        switch (n)
-                        {
-                            case 0:
-                                break;
-                            case 1:
-                                CompanyService.GetProductNames();
-                                break;
-                            case 2:
-                                break;
-                            default:
-                                Console.WriteLine("duzgun deyil");
-                                break;
-                        }
-
-                        //if (n == 0) goto GO;
-
-                        //char save = Convert.ToChar(Console.ReadLine());
-                        //if (save == 's' || save == 'S')
-                        //{
-                        //    Console.WriteLine("How much pizza do you want?");
-                        //    int count = Convert.ToInt32(Console.ReadLine());
-                        //}
-                        //Console.Write("Do you want to return to the product menu? ");
-                        //char go= Convert.ToChar(Console.ReadLine());
-                        //if (go=='g' || go=='G')
-                        //{
-                        //    goto Go;
-                        //}
+                    case "1":
+                        Console.Write("New name: ");
+                        CompanyService.UpdateProduct(Console.ReadLine(), IInput);
                         break;
-                    case 2:
-                        // sifaris metodu
-                        break;
-                    default:
-                        Console.WriteLine("Düzgün seçim edilməyib. Yenidən cəhd edin.");
+                    case "2":
+                        Console.Write("New price: ");
+                        Decimal.TryParse(Console.ReadLine(), out DInput);
+                        CompanyService.UpdateProduct(DInput, IInput);
+                        break; 
+                    case "3":
+                        Console.Write("New count: ");
+                        Int32.TryParse(Console.ReadLine(), out int count);
+                        CompanyService.UpdateProduct(count, IInput);
                         break;
                 }
+                break;
+            case 4:
+                CompanyService.RemoveProduct(IInput);
+                break;
+        }
+    }
+    static void UserCRUD()
+    {
+        switch (CRUDMenu())
+        {
+            case 1:
+                Register();
+                break;
+            case 2:
+                CompanyService.GetUsersData().ForEach(x => Console.WriteLine(x));
+                break;
+            case 3:
+                CompanyService.UpdateUser(IInput);
+                break;
+            case 4:
+                CompanyService.RemoveUser(IInput);
+                break;
+        }
+    }
+    static void OrderMenu()
+    {
+        List<(int count, int id)> Basket = new List<(int count, int id)>();
+        List<(int id, int count, decimal price, string name)> Data = CompanyService.GetProductsData();
+        (int id, int count, decimal price, string name) data1;
+
+        Data.ForEach(x => Console.WriteLine(x.name));
+        do
+        {
+            Console.Write("Add to basket (ID or S to complete orders count or 0 to finish order): ");
+            SInput = Console.ReadLine();
+            if (SInput == "0") break;
+            if (SInput == "S")
+            {
+                for (int i = 0; i < Basket.Count;)
+                {
+                    if (Basket[i].count != 0)
+                    {
+                        i++;
+                        continue;
+                    }
+                    data1 = Data.Find(x => x.id == Basket[i].id);
+                    Console.WriteLine(data1.name);
+
+                    Console.Write("How many you would like (or G to order more): ");
+                    SInput = Console.ReadLine();
+
+                    if (SInput == "G") break;
+
+                    Int32.TryParse(SInput, out IInput);
+                    if (IInput > 0 && data1.count >= IInput)
+                    {
+                        Basket[i] = (IInput, Basket[i].id);
+                        CompanyService.UpdateProduct(data1.count - IInput, data1.id);
+                        i++;
+                    }
+                }
+                Data.ForEach(x => Console.WriteLine(x.name));
+                continue;
+            }
+
+            Int32.TryParse(SInput, out IInput);
+            data1 = Data.Find(x => x.id == IInput);
+
+            if (data1.id != 0 && (Basket.Find(b => b.id == data1.id).id == 0))
+            {
+                Basket.Add((0, data1.id));
+                Console.WriteLine("added.");
+            }
+        } while (true);
+
+        Basket = Basket.FindAll(b => b.count > 0);
+        Basket.ForEach(b => CompanyService.AddToOrder(b.id, b.count));
+    }
+    static void NextMenu()
+    {
+        bool admin = (SInput[^1] == '2');
+        while (isLogin)
+        {
+            Console.WriteLine("\n0. Log out\n1. Look at pizzas\n2. Send orders\n3. Clear orders");
+            if (admin)
+            {
+                Console.WriteLine("4. Product CRUD (Pizzzas)");
+                Console.WriteLine("5. User CRUD");
+                Console.Write(MenuRequestMessage("Admin"));
+            }
+            else Console.Write(MenuRequestMessage("User"));
+
+            switch (Console.ReadLine())
+            {
+                case "0":
+                    isLogin = false;
+                    break;
+                case "1":
+                    OrderMenu();
+                    break;
+                case "2":
+                    var orders = CompanyService.GetOrders();
+
+                    if (orders.Count == 0)
+                    {
+                        Console.WriteLine("No proper orders made.");
+                        break;
+                    }
+
+                    decimal TotalPrice = 0;
+                    foreach (var item in orders)
+                    {
+                        Console.WriteLine(item.name);
+                        TotalPrice += (item.price * (decimal)item.count);
+                    }
+
+                    Console.WriteLine("Total price will be: " + TotalPrice);
+                    Console.Write("Would you like it to be send?(y/): ");
+                    if (Console.ReadLine().ToLower() == "y")
+                    {
+                        CompanyService.SendOrders();
+                        Console.WriteLine("Bon apetit.");
+                    }
+                    break;
+                case "3":
+                    CompanyService.RemoveOrders();
+                    break;
+                case "4":
+                    ProductCRUD();
+                    break;
+                case "5":
+                    UserCRUD();
+                    break;
+                default:
+                    break;
             }
         }
-        else
-        {
+    }
 
-        }
+
+    static void Main(string[] args)
+    {
+        do
+        {
+            try
+            {
+                LoginMenu();
+                NextMenu();
+            }
+            catch (ServiceExceptions ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+        } while (true);
     }
 }

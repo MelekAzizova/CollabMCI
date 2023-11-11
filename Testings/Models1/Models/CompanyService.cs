@@ -1,100 +1,98 @@
-﻿using System.Linq;
-
-namespace Core.Models;
+﻿namespace Core.Models;
 
 public static class CompanyService
 {
-    static User _user { get; set; }
-    public enum KnownProductTypes
+    static User _user;
+    public static bool LoginUser(ref string username, string password)
     {
-        pizza
-    }
-
-    public static void LoginUser(string username, string password)
-    {
-        Console.WriteLine("We're so excited to see you again");
-        _user = CompanyDB.UserList.SingleOrDefault(u => u.Name == username && u.Password == password);
-        if(_user != null)
-        {
-            Console.WriteLine($"Welcome  {username}  ");
-        }
+        string localname = username;
+        CompanyService._user = CompanyDB.UserList.SingleOrDefault(u => u.Username == localname && u.Password == password);
+        
+        if (CompanyService._user == null) return false;
         else
         {
-            Console.WriteLine("Invalid username or password.Please again try");
+            username = CompanyService._user.Name + " " + CompanyService._user.Surname 
+                + "\n" + (int)CompanyService._user.Role;
+            return true;
         }
-        
     }
-    public static void RegisterUser(string name, string surname, string username, string password)
+
+    public static bool RegisterUser(string name, string surname, string username, string password)
     {
-        Console.WriteLine("Enter name: ");
-        name=Console.ReadLine();
-        if(name==null)
+        CompanyService._user = CompanyDB.UserList.SingleOrDefault(u => u.Username == username);
+        if (CompanyService._user == null)
         {
-            throw new ArgumentNullException();
+            CompanyService._user = new();
+            CompanyService._user.Name = name;
+            CompanyService._user.Surname = surname;
+            CompanyService._user.Username = username;
+            CompanyService._user.Password = password;
+
+            CompanyService._user.Role = Roles.user;
+            CompanyService._user.UpdateID();
+
+            CompanyDB.UserList.Add(CompanyService._user);
+            return true;
         }
-
-        Console.WriteLine("Enter surname: ");
-        surname=Console.ReadLine();
-        if(surname==null)
-        {
-            throw new ArgumentNullException();
-        }
-
-
-
+        else return false;
     }
-    public static string[] KnownProducts()
+    public static bool CreateProduct(string name, decimal price, int count, KnownProductTypes type = KnownProductTypes.pizza)
     {
-
-        return Enum.GetNames(typeof(KnownProductTypes));
-    }
-    public static void CreateProduct(string name, int price,KnownProductTypes type = KnownProductTypes.pizza)
-    {
-        Product product;
+        Product product = null;
         switch (type)
         {
             case KnownProductTypes.pizza:
                 product = new Pizza();
                 break;
-           
+            default:
+                return false;
         }
-       
+
+        product.Name = name;
+        product.Price = price;
+        product.Count = count;
+        product.UpdateID();
+
+        CompanyDB.ProductList.Add(product);
+        return true;
     }
-    public static string[] GetUserNames()
+
+    public static List<(int id, int count, decimal price, string name)> GetProductsData(KnownProductTypes type = KnownProductTypes.pizza)
     {
-        string[] username = new string[CompanyDB.UserList.Count];
-        for (int i = 0; i < username.Length; i++)
+        List<(int id, int count, decimal price, string name)> data = new List<(int id, int count, decimal price, string name)>();
+
+        if (type == KnownProductTypes.none)
         {
-            username[i] = CompanyDB.UserList[i].Username;
+            CompanyDB.ProductList.ForEach(p => data.Add((p.ID, p.Count, p.Price, p.ToString())));
         }
-        return username;
+        else
+        {
+            CompanyDB.ProductList.FindAll(p => p.Type == type).ForEach(p => data.Add((p.ID, p.Count, p.Price, p.ToString())));
+        }
+
+        return data;
     }
-    public static string[] GetProductNames()
+    public static List<string> GetUsersData()
     {
-        string[] names = new string[CompanyDB.ProductList.Count];
-        for (int i = 0; i < names.Length; i++)
-        {
-            names[i] = CompanyDB.ProductList[i].Name;
-        }
+        List<string> names = new List<string>();
+        CompanyDB.UserList.ForEach(u => names.Add(u.ToString()));
         return names;
     }
-    public static bool UpdateUser()
-    {
-        
 
-        return default;
-    }
-    public static bool UpdateProduct()
-    {
-        return default;
-    }
+    public static void UpdateUser(int id) => CompanyDB.UserList.SingleOrDefault(u => u.ID == id).Role = Roles.admin;
+    public static void UpdateProduct(int count, int id) => CompanyDB.ProductList.SingleOrDefault(p => p.ID == id).Count = count;
+    public static void UpdateProduct(decimal price, int id) => CompanyDB.ProductList.SingleOrDefault(p => p.ID == id).Price = price;
+    public static void UpdateProduct(string name, int id) => CompanyDB.ProductList.SingleOrDefault(p => p.ID == id).Name = name;
+
     public static bool RemoveUser(int id)
     {
-        User user =  CompanyDB.UserList.Find(u => u.ID == id);
-        if(user != null)
-        {
+        if (id == CompanyService._user.ID) return false;
 
-         CompanyDB.UserList.Remove(user);
+        User user = CompanyDB.UserList.SingleOrDefault(u => u.ID == id);
+
+        if (user != null) 
+        {
+            CompanyDB.UserList.Remove(user);
             return true;
         }
 
@@ -102,14 +100,43 @@ public static class CompanyService
     }
     public static bool RemoveProduct(int id)
     {
-        Product product = CompanyDB.ProductList.Find(u => u.ID == id);
+        Product product = CompanyDB.ProductList.SingleOrDefault(u => u.ID == id);
+
         if (product != null)
         {
-
             CompanyDB.ProductList.Remove(product);
             return true;
         }
 
         return false;
+    }
+
+    public static void AddToOrder(int id, int count)
+    {
+        CompanyDB.OrderList.Add((CompanyService._user.ID, CompanyDB.ProductList.Find(p => p.ID == id).CopyItForOrder(count), false));
+    }
+    public static void RemoveOrders()
+    {
+        foreach (var item in CompanyDB.OrderList.FindAll(o => !o.isSend && CompanyService._user.ID == o.userID))
+        {
+            CompanyDB.ProductList.Find(p => p.ID == item.product.ID).Count += item.product.Count;
+            CompanyDB.OrderList.Remove(item);
+        }
+    }
+    public static List<(string name, decimal price, int count)> GetOrders()
+    {
+        List<(string, decimal, int)> Orders = new List<(string, decimal, int)>();
+        CompanyDB.OrderList.FindAll(o => (!o.isSend) && CompanyService._user.ID == o.userID)
+            .ForEach(o => Orders.Add((o.product.ToString(), o.product.Price, o.product.Count)));
+        return Orders;
+    }
+    public static void SendOrders()
+    {
+        for (int i = 0; i < CompanyDB.OrderList.Count; i++)
+        {
+            var item = CompanyDB.OrderList[i];
+            if (item.isSend || item.userID != CompanyService._user.ID) continue;
+            CompanyDB.OrderList[i] = (item.userID, item.product, true);
+        }
     }
 }

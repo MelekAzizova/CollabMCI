@@ -2,8 +2,16 @@
 
 internal class Pizza : Product
 {
-    public override string ToString()
+    public override Product CopyItForOrder(int count)
     {
-        return "Pizza " + this.Name;
+        Pizza product = new Pizza();
+
+        product.ID = this.ID;
+        product.Name = this.Name;
+        product.Price = this.Price;
+        product.Count = count;
+        product.Type = this.Type;
+
+        return product;
     }
 }

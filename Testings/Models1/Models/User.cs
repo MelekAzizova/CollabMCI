@@ -18,22 +18,6 @@ internal class User
     public string Name { get; set; }
     public string Surname { get; set; }
 
-    //public string Name 
-    //{
-    //    get => this._name;
-    //    set
-    //    {
-
-    //    }
-    //}
-    //public string Surname 
-    //{
-    //    get => this._surname;
-    //    set
-    //    {
-
-    //    }
-    //}
     public string Username 
     {
         get => this._username;
@@ -82,12 +66,17 @@ internal class User
         set
         {
             if (!Enum.IsDefined<Roles>(value)) throw new InvalidRoleException();
-            this.Role = value;
+            this._role = value;
         }
     }
 
     public void UpdateID()
     {
         this.ID = User._uniqueID++;
+    }
+
+    public override string ToString()
+    {
+        return "[" + this.ID + "]: " + this.Role + " " + this.Username;
     }
 }
