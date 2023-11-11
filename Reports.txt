@@ -9,6 +9,12 @@ Time, Tag: Describtion.
 
 09.11.2023 21:00, Meeting 02:
 	Melek -> CompanyService update.
-	Inare -> Interface first faze.
+	Inara -> Interface first faze.
 	Jafar -> Exception cases.
+
+
+11.11.2023 18:00, Meeting 03:
+	Melek -> Bug fixing.
+	Inara -> Bug fixing.
+	Jafar -> General update. 
 	
