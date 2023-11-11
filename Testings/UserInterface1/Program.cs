@@ -58,7 +58,10 @@ internal class Program
                     break;
             }
 
-            if (isLogin) Console.WriteLine($"\nWelcome back {SInput.Substring(0, SInput.Length - 2)}.");
+            if (isLogin)
+            {
+                Console.WriteLine("\nWelcome back " + SInput);
+            }
         }
     }
     static int CRUDMenu()
@@ -158,6 +161,32 @@ internal class Program
         List<(int id, int count, decimal price, string name)> Data = CompanyService.GetProductsData();
         (int id, int count, decimal price, string name) data1;
 
+        void CountPart()
+        {
+            for (int i = 0; i < Basket.Count;)
+            {
+                if (Basket[i].count != 0)
+                {
+                    i++;
+                    continue;
+                }
+                data1 = Data.Find(x => x.id == Basket[i].id);
+                Console.WriteLine(data1.name);
+
+                Console.Write("How many you would like (or G to order more): ");
+                SInput = Console.ReadLine();
+
+                if (SInput == "G") break;
+
+                Int32.TryParse(SInput, out IInput);
+                if (IInput > 0 && data1.count >= IInput)
+                {
+                    Basket[i] = (IInput, Basket[i].id);
+                    CompanyService.UpdateProduct(data1.count - IInput, data1.id);
+                    i++;
+                }
+            }
+        }
         Data.ForEach(x => Console.WriteLine(x.name));
         do
         {
@@ -166,51 +195,38 @@ internal class Program
             if (SInput == "0") break;
             if (SInput == "S")
             {
-                for (int i = 0; i < Basket.Count;)
-                {
-                    if (Basket[i].count != 0)
-                    {
-                        i++;
-                        continue;
-                    }
-                    data1 = Data.Find(x => x.id == Basket[i].id);
-                    Console.WriteLine(data1.name);
-
-                    Console.Write("How many you would like (or G to order more): ");
-                    SInput = Console.ReadLine();
-
-                    if (SInput == "G") break;
-
-                    Int32.TryParse(SInput, out IInput);
-                    if (IInput > 0 && data1.count >= IInput)
-                    {
-                        Basket[i] = (IInput, Basket[i].id);
-                        CompanyService.UpdateProduct(data1.count - IInput, data1.id);
-                        i++;
-                    }
-                }
+                CountPart();
                 Data.ForEach(x => Console.WriteLine(x.name));
                 continue;
             }
 
             Int32.TryParse(SInput, out IInput);
+            if (IInput == 0) continue;
             data1 = Data.Find(x => x.id == IInput);
 
-            if (data1.id != 0 && (Basket.Find(b => b.id == data1.id).id == 0))
+            if (data1.id != 0)
             {
-                Basket.Add((0, data1.id));
-                Console.WriteLine("added.");
+                if(Basket.Find(b => b.id == data1.id).id == 0)
+                {
+                    Basket.Add((0, data1.id));
+                    Console.WriteLine("added.");
+                }
+                else Console.WriteLine("Varda onsuzda");
             }
         } while (true);
 
         Basket = Basket.FindAll(b => b.count > 0);
         Basket.ForEach(b => CompanyService.AddToOrder(b.id, b.count));
+
+        
     }
+
     static void NextMenu()
     {
-        bool admin = (SInput[^1] == '2');
+        
         while (isLogin)
         {
+            bool admin = CompanyService.IsAdmin();
             Console.WriteLine("\n0. Log out\n1. Look at pizzas\n2. Send orders\n3. Clear orders");
             if (admin)
             {
@@ -256,10 +272,10 @@ internal class Program
                     CompanyService.RemoveOrders();
                     break;
                 case "4":
-                    ProductCRUD();
+                    if (admin) ProductCRUD();
                     break;
                 case "5":
-                    UserCRUD();
+                    if (admin) UserCRUD();
                     break;
                 default:
                     break;
@@ -270,6 +286,7 @@ internal class Program
 
     static void Main(string[] args)
     {
+        bool admin = false;
         do
         {
             try

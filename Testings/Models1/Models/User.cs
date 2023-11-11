@@ -65,7 +65,7 @@ internal class User
         get => _role;
         set
         {
-            if (!Enum.IsDefined<Roles>(value)) throw new InvalidRoleException();
+            if (!Enum.IsDefined(typeof(Roles), value)) throw new InvalidRoleException();
             this._role = value;
         }
     }

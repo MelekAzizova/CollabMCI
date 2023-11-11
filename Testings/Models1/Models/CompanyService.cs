@@ -11,10 +11,13 @@ public static class CompanyService
         if (CompanyService._user == null) return false;
         else
         {
-            username = CompanyService._user.Name + " " + CompanyService._user.Surname 
-                + "\n" + (int)CompanyService._user.Role;
+            username = CompanyService._user.Name + " " + CompanyService._user.Surname;
             return true;
         }
+    }
+    public static bool IsAdmin()
+    {
+        return CompanyService._user.Role == Roles.admin;
     }
 
     public static bool RegisterUser(string name, string surname, string username, string password)
