@@ -67,7 +67,7 @@ internal class Program
     }
     static int CRUDMenu()
     {
-        Console.WriteLine("1. Create");
+        Console.WriteLine("\n1. Create");
         Console.WriteLine("2. Read All");
         Console.WriteLine("3. Update"); //(Id-ə görə) (Userlərin sadəcə rolunu dəyişmək olacaq)
         Console.WriteLine("4. Delete"); //(Id-ə görə)
@@ -110,9 +110,9 @@ internal class Program
                 CompanyService.GetProductsData().ForEach(x => Console.WriteLine(x.name));
                 break;
             case 3:
-                Console.WriteLine("1. Name");
-                Console.WriteLine("2. Price");
-                Console.WriteLine("3. Count");
+                Console.WriteLine("\t1. Name");
+                Console.WriteLine("\t2. Price");
+                Console.WriteLine("\t3. Count");
                 Console.Write("What to change?: ");
 
                 switch (Console.ReadLine())
@@ -156,7 +156,7 @@ internal class Program
                 break;
         }
     }
-    static void OrderMenu()
+    static void ProductMenu()
     {
         List<(int count, int id)> Basket = new List<(int count, int id)>();
         List<(int id, int count, decimal price, string name)> Data = CompanyService.GetProductsData();
@@ -172,7 +172,7 @@ internal class Program
                     continue;
                 }
                 data1 = Data.Find(x => x.id == Basket[i].id);
-                Console.WriteLine(data1.name);
+                Console.WriteLine("\n" + data1.name);
 
                 Console.Write("How many you would like (or G to order more): ");
                 SInput = Console.ReadLine();
@@ -187,8 +187,12 @@ internal class Program
                     i++;
                 }
             }
+            Console.WriteLine();
+            Data.ForEach(x => Console.WriteLine(x.name));
         }
+        Console.WriteLine();
         Data.ForEach(x => Console.WriteLine(x.name));
+
         do
         {
             Console.Write("Add to basket (ID or S to complete orders count or 0 to finish order): ");
@@ -197,7 +201,7 @@ internal class Program
             if (SInput == "S")
             {
                 CountPart();
-                Data.ForEach(x => Console.WriteLine(x.name));
+                //Data.ForEach(x => Console.WriteLine(x.name));
                 continue;
             }
 
@@ -218,21 +222,68 @@ internal class Program
 
         Basket = Basket.FindAll(b => b.count > 0);
         Basket.ForEach(b => CompanyService.AddToOrder(b.id, b.count));
-
-        
     }
+    static void OrderMenu()
+    {
+        var orders = CompanyService.GetOrders();
 
+        if (orders.Count == 0)
+        {
+            Console.WriteLine("No proper orders made.");
+            return;
+        }
+
+        decimal TotalPrice = 0;
+        foreach (var item in orders)
+        {
+            Console.Write("\n\t" + item.name);
+            TotalPrice += (item.price * (decimal)item.count);
+        }
+
+        Console.WriteLine("\n\tTotal price will be: " + TotalPrice);
+        Console.WriteLine("0. Remove order");
+        Console.WriteLine("1. Send them to new address");
+        Console.WriteLine("2. Send them to last address");
+        Console.Write("Action (any other to cansel): ");
+
+        switch (Console.ReadLine())
+        {
+            case "0":
+                Console.Write("ID of product: ");
+                Int32.TryParse(Console.ReadLine(), out IInput);
+                CompanyService.RemoveOrder(IInput);
+                return;
+            case "1":
+                Console.Write("Address: ");
+                SInput = Console.ReadLine();
+
+                Console.Write("Phone number: ");
+                CompanyService.MakeAdvanced(SInput, Console.ReadLine());
+                break;
+            case "2":
+                if (!CompanyService.DoesHaveLastTime()) 
+                {
+                    Console.WriteLine("You dont have last time.");
+                    return;
+                }
+                break;
+            default:
+                return;
+        }
+
+        CompanyService.SendOrders();
+        Console.WriteLine("Bon apetit.");
+    }
     static void NextMenu()
     {
-        
         while (isLogin)
         {
             bool admin = CompanyService.IsAdmin();
-            Console.WriteLine("\n0. Log out\n1. Look at pizzas\n2. Send orders\n3. Clear orders");
+            Console.WriteLine("\n0. Log out\n1. Look at pizzas\n2. Order menu");
             if (admin)
             {
-                Console.WriteLine("4. Product CRUD (Pizzzas)");
-                Console.WriteLine("5. User CRUD");
+                Console.WriteLine("3. Product CRUD (Pizzzas)");
+                Console.WriteLine("4. User CRUD");
                 Console.Write(MenuRequestMessage("Admin"));
             }
             else Console.Write(MenuRequestMessage("User"));
@@ -243,56 +294,15 @@ internal class Program
                     isLogin = false;
                     break;
                 case "1":
-                    OrderMenu();
+                    ProductMenu();
                     break;
                 case "2":
-                    var orders = CompanyService.GetOrders();
-
-                    if (orders.Count == 0)
-                    {
-                        Console.WriteLine("No proper orders made.");
-                        break;
-                    }
-
-                    decimal TotalPrice = 0;
-                    foreach (var item in orders)
-                    {
-                        Console.WriteLine(item.name);
-                        TotalPrice += (item.price * (decimal)item.count);
-                    }
-
-                    Console.WriteLine("Total price will be: " + TotalPrice);
-
-                    string deliveryAddres;
-                    string pattern;
-
-                    do
-                    {
-                        Console.Write("Address: ");
-                        deliveryAddres = Console.ReadLine();
-                        pattern = @"^[a-zA-Z0-9\s,]+$";
-
-                    } while(Regex.IsMatch(deliveryAddres, pattern));
-
-                    string phoneNumber;
-
-                    do
-                    {
-                        Console.Write("Number (+994 55 555 55 55)): ");
-                        phoneNumber = Console.ReadLine();
-
-                    } while (!Regex.IsMatch(phoneNumber, @"^\+994\s(50|51|55|70|77)\s\d{3}\s\d{2}\s\d{2}$"));
-
-                    Console.WriteLine("Bon apetit.");
-
+                    OrderMenu();
                     break;
                 case "3":
-                    CompanyService.RemoveOrders();
-                    break;
-                case "4":
                     if (admin) ProductCRUD();
                     break;
-                case "5":
+                case "4":
                     if (admin) UserCRUD();
                     break;
                 default:

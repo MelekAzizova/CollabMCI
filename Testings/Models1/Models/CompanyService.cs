@@ -1,4 +1,6 @@
-﻿namespace Core.Models;
+﻿using Core.Exceptions;
+
+namespace Core.Models;
 
 public static class CompanyService
 {
@@ -19,6 +21,7 @@ public static class CompanyService
     {
         return CompanyService._user.Role == Roles.admin;
     }
+
 
     public static bool RegisterUser(string name, string surname, string username, string password)
     {
@@ -60,6 +63,7 @@ public static class CompanyService
         return true;
     }
 
+
     public static List<(int id, int count, decimal price, string name)> GetProductsData(KnownProductTypes type = KnownProductTypes.pizza)
     {
         List<(int id, int count, decimal price, string name)> data = new List<(int id, int count, decimal price, string name)>();
@@ -82,28 +86,35 @@ public static class CompanyService
         return names;
     }
 
-    public static void UpdateUser(int id) => CompanyDB.UserList.SingleOrDefault(u => u.ID == id).Role = Roles.admin;
-    public static void UpdateProduct(int count, int id) => CompanyDB.ProductList.SingleOrDefault(p => p.ID == id).Count = count;
-    public static void UpdateProduct(decimal price, int id) => CompanyDB.ProductList.SingleOrDefault(p => p.ID == id).Price = price;
-    public static void UpdateProduct(string name, int id) => CompanyDB.ProductList.SingleOrDefault(p => p.ID == id).Name = name;
+
+    static Product ThatProduct(int id)
+    {
+        Product product = CompanyDB.ProductList.SingleOrDefault(p => p.ID == id);
+        if (product == null) throw new ProductNotFoundException();
+        return product;
+    }
+    static User ThatUser(int id)
+    {
+        User user = CompanyDB.UserList.SingleOrDefault(u => u.ID == id);
+        if (user == null) throw new UserNotFoundException();
+        return user;
+    }
+    public static void UpdateUser(int id) => ThatUser(id).Role = Roles.admin;
+    public static void UpdateProduct(int count, int id) => ThatProduct(id).Count = count;
+    public static void UpdateProduct(decimal price, int id) => ThatProduct(id).Price = price;
+    public static void UpdateProduct(string name, int id) => ThatProduct(id).Name = name;
+
 
     public static bool RemoveUser(int id)
     {
         if (id == CompanyService._user.ID) return false;
-
-        User user = CompanyDB.UserList.SingleOrDefault(u => u.ID == id);
-
-        if (user != null) 
-        {
-            CompanyDB.UserList.Remove(user);
-            return true;
-        }
-
-        return false;
+        User user = ThatUser(id);
+        CompanyDB.UserList.Remove(user);
+        return true;
     }
     public static bool RemoveProduct(int id)
     {
-        Product product = CompanyDB.ProductList.SingleOrDefault(u => u.ID == id);
+        Product product = ThatProduct(id);
 
         if (product != null)
         {
@@ -114,32 +125,51 @@ public static class CompanyService
         return false;
     }
 
+
     public static void AddToOrder(int id, int count)
     {
-        CompanyDB.OrderList.Add((CompanyService._user.ID, CompanyDB.ProductList.Find(p => p.ID == id).CopyItForOrder(count), false));
+        Product product = ThatProduct(id);
+        if (product == null) return;
+        CompanyDB.OrderList.Add((CompanyService._user, product.CopyItForOrder(count), false));
     }
-    public static void RemoveOrders()
+    public static void RemoveOrder(int id)
     {
-        foreach (var item in CompanyDB.OrderList.FindAll(o => !o.isSend && CompanyService._user.ID == o.userID))
-        {
-            CompanyDB.ProductList.Find(p => p.ID == item.product.ID).Count += item.product.Count;
-            CompanyDB.OrderList.Remove(item);
-        }
+        var item = CompanyDB.OrderList.Find(o => !o.isSend && CompanyService._user.ID == o.user.ID && o.product.ID == id);
+        if (item.product == null) return;
+
+        ThatProduct(id).Count += item.product.Count;
+        CompanyDB.OrderList.Remove(item);
     }
+
     public static List<(string name, decimal price, int count)> GetOrders()
     {
         List<(string, decimal, int)> Orders = new List<(string, decimal, int)>();
-        CompanyDB.OrderList.FindAll(o => (!o.isSend) && CompanyService._user.ID == o.userID)
+        CompanyDB.OrderList.FindAll(o => (!o.isSend) && CompanyService._user.ID == o.user.ID)
             .ForEach(o => Orders.Add((o.product.ToString(), o.product.Price, o.product.Count)));
         return Orders;
     }
-    public static void SendOrders()
+    public static bool DoesHaveLastTime()
     {
+        if (CompanyService._user.Adress == "none") return false;
+        if (CompanyService._user.PhoneNumber == "none") return false;
+        return true;
+    }
+    public static bool SendOrders()
+    { 
+        bool once = false;
         for (int i = 0; i < CompanyDB.OrderList.Count; i++)
         {
             var item = CompanyDB.OrderList[i];
-            if (item.isSend || item.userID != CompanyService._user.ID) continue;
-            CompanyDB.OrderList[i] = (item.userID, item.product, true);
+            if (item.isSend || item.user.ID != CompanyService._user.ID) continue;
+            CompanyDB.OrderList[i] = (item.user, item.product, true);
+            once = true;
         }
+
+        return once;
+    }
+    public static void MakeAdvanced(string address, string phone)
+    {
+        CompanyService._user.Adress = address;
+        CompanyService._user.PhoneNumber = phone;
     }
 }

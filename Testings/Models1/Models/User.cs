@@ -1,4 +1,5 @@
 ﻿using Core.Exceptions;
+using System.Text.RegularExpressions;
 
 namespace Core.Models;
 
@@ -11,7 +12,7 @@ internal enum Roles
 internal class User
 {
     static int _uniqueID = 1;
-    string _username, _password;
+    string _username, _password, _address = "none", _phoneNumber = "none";
     Roles _role = Roles.guest;
 
     public int ID { get; private set; } 
@@ -70,11 +71,31 @@ internal class User
         }
     }
 
+    public string Adress 
+    {
+        get => this._address;
+        set
+        {
+            const string pattern = @"^[a-zA-Z0-9\s,]+$";
+            if (!Regex.IsMatch(value, pattern)) throw new InvalidAddressException();
+            this._address = value;
+        }
+    }
+    public string PhoneNumber
+    {
+        get => this._phoneNumber;
+        set
+        {
+            const string pattern = @"^\+994\s(50|51|55|70|77)\s\d{3}\s\d{2}\s\d{2}$";
+            if(!Regex.IsMatch(value, pattern)) throw new InvalidPhoneNumberException();
+            this._phoneNumber = value;
+        }
+    }
+
     public void UpdateID()
     {
         this.ID = User._uniqueID++;
     }
-
     public override string ToString()
     {
         return "[" + this.ID + "]: " + this.Role + " " + this.Username;

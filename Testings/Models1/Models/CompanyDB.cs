@@ -4,7 +4,7 @@ internal static class CompanyDB
 {
     internal static List<User> UserList = new List<User>();
     internal static List<Product> ProductList = new List<Product>();
-    internal static List<(int userID, Product product, bool isSend)> OrderList = new List<(int, Product, bool)>();
+    internal static List<(User user, Product product, bool isSend)> OrderList = new List<(User, Product, bool)>();
     
     static CompanyDB()
     {
