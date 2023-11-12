@@ -1,5 +1,6 @@
 ﻿using Core.Exceptions;
 using Core.Models;
+using System.Text.RegularExpressions;
 
 namespace UserInterface1;
 
@@ -261,12 +262,29 @@ internal class Program
                     }
 
                     Console.WriteLine("Total price will be: " + TotalPrice);
-                    Console.Write("Would you like it to be send?(y/): ");
-                    if (Console.ReadLine().ToLower() == "y")
+
+                    string deliveryAddres;
+                    string pattern;
+
+                    do
                     {
-                        CompanyService.SendOrders();
-                        Console.WriteLine("Bon apetit.");
-                    }
+                        Console.Write("Address: ");
+                        deliveryAddres = Console.ReadLine();
+                        pattern = @"^[a-zA-Z0-9\s,]+$";
+
+                    } while(Regex.IsMatch(deliveryAddres, pattern));
+
+                    string phoneNumber;
+
+                    do
+                    {
+                        Console.Write("Number (+994 55 555 55 55)): ");
+                        phoneNumber = Console.ReadLine();
+
+                    } while (!Regex.IsMatch(phoneNumber, @"^\+994\s(50|51|55|70|77)\s\d{3}\s\d{2}\s\d{2}$"));
+
+                    Console.WriteLine("Bon apetit.");
+
                     break;
                 case "3":
                     CompanyService.RemoveOrders();
