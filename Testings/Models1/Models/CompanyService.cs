@@ -25,26 +25,26 @@ public static class CompanyService
 
     public static bool RegisterUser(string name, string surname, string username, string password)
     {
-        CompanyService._user = CompanyDB.UserList.SingleOrDefault(u => u.Username == username);
-        if (CompanyService._user == null)
+        User user = CompanyDB.UserList.SingleOrDefault(u => u.Username == username);
+        if (user == null)
         {
-            CompanyService._user = new();
-            CompanyService._user.Name = name;
-            CompanyService._user.Surname = surname;
-            CompanyService._user.Username = username;
-            CompanyService._user.Password = password;
+            user = new();
+            user.Name = name;
+            user.Surname = surname;
+            user.Username = username;
+            user.Password = password;
 
-            CompanyService._user.Role = Roles.user;
-            CompanyService._user.UpdateID();
+            user.Role = Roles.user;
+            user.UpdateID();
 
-            CompanyDB.UserList.Add(CompanyService._user);
+            CompanyDB.UserList.Add(user);
             return true;
         }
         else return false;
     }
     public static bool CreateProduct(string name, decimal price, int count, KnownProductTypes type = KnownProductTypes.pizza)
     {
-        Product product = null;
+        Product product;
         switch (type)
         {
             case KnownProductTypes.pizza:
@@ -57,6 +57,8 @@ public static class CompanyService
         product.Name = name;
         product.Price = price;
         product.Count = count;
+        product.Type = type;
+
         product.UpdateID();
 
         CompanyDB.ProductList.Add(product);

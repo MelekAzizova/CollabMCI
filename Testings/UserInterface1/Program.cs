@@ -73,21 +73,23 @@ internal class Program
         Console.WriteLine("4. Delete"); //(Id-ə görə)
         Console.Write("Action: ");
 
+        void askID()
+        {
+            Console.Write("ID: ");
+            Int32.TryParse(Console.ReadLine(), out IInput);
+        }
+
         switch (Console.ReadLine())
         {
             case "1":
-                Console.Write("Name: ");
-                SInput = Console.ReadLine();
                 return 1;
             case "2":
                 return 2;
             case "3":
-                Console.Write("ID: ");
-                Int32.TryParse(Console.ReadLine(), out IInput);
+                askID();
                 return 3;
             case "4":
-                Console.Write("ID: ");
-                Int32.TryParse(Console.ReadLine(), out IInput);
+                askID();
                 return 4;
         }
 
@@ -98,10 +100,13 @@ internal class Program
         switch (CRUDMenu())
         {
             case 1:
-                Console.Write("Price: ");
+                Console.Write("\tName: ");
+                SInput = Console.ReadLine();
+
+                Console.Write("\tPrice: ");
                 Decimal.TryParse(Console.ReadLine(), out DInput);
 
-                Console.Write("Count: ");
+                Console.Write("\tCount: ");
                 Int32.TryParse(Console.ReadLine(), out IInput);
 
                 CompanyService.CreateProduct(SInput, DInput, IInput);

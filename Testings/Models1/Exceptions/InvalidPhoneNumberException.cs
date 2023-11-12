@@ -2,5 +2,5 @@
 
 public class InvalidPhoneNumberException : UserExceptions
 {
-    public InvalidPhoneNumberException(string msg = "Invalid address.") : base(msg) { }
+    public InvalidPhoneNumberException(string msg = "Invalid phone number.") : base(msg) { }
 }
